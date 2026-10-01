@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FBEDE8">
+<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>Cartes Reconquête</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&display=swap">
+<style>
+/* Layout: one-screen app — header, category chips, one large card that fills the remaining height, actions pinned below. */
+:root {
+  --bg: #FBEDE8; --glow: #F6CFCB; --fg: #4A1526; --muted: #8C5A63; --surface: #FFF8F4; --line: #EBC9C4;
+  --accent: #C2264F; --on-accent: #FFFFFF; --heart: #E58A9C;
+  --card-s: 78%; --card-l: 93%; --ink-s: 60%; --ink-l: 24%; --edge-l: 80%;
+  --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --ui: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #24090F; --glow: #4F1526; --fg: #FBE6E1; --muted: #C99AA1; --surface: #381219; --line: #5A222E;
+    --accent: #FF7C96; --on-accent: #3A0712; --heart: #B8475E;
+    --card-s: 42%; --card-l: 20%; --ink-s: 75%; --ink-l: 90%; --edge-l: 36%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #24090F; --glow: #4F1526; --fg: #FBE6E1; --muted: #C99AA1; --surface: #381219; --line: #5A222E;
+  --accent: #FF7C96; --on-accent: #3A0712; --heart: #B8475E;
+  --card-s: 42%; --card-l: 20%; --ink-s: 75%; --ink-l: 90%; --edge-l: 36%;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+html { background: radial-gradient(130% 55% at 50% 0%, var(--glow), transparent 72%), radial-gradient(90% 40% at 50% 100%, var(--glow), transparent 75%), var(--bg); }
+.hearts { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.hearts span { position: absolute; bottom: -40px; color: var(--heart); opacity: 0; animation: rise linear infinite; }
+@keyframes rise { 0% { transform: translateY(0) rotate(-8deg); opacity: 0; } 15% { opacity: .5; } 85% { opacity: .35; } 100% { transform: translateY(-110vh) rotate(10deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hearts span { animation: none; opacity: .25; bottom: auto; } }
+body > :not(.hearts):not(#panel) { position: relative; z-index: 1; }
+h1 em { font-style: normal; color: var(--accent); }
+body {
+  background: transparent; color: var(--fg); font-family: var(--ui); font-size: 16px;
+  box-sizing: border-box; padding-inline: 16px; padding-block: 14px;
+  display: flex; flex-direction: column; gap: 12px; max-width: 480px; margin-inline: auto;
+}
+*, *::before, *::after { box-sizing: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.75rem; margin: 0; line-height: 1; }
+#count { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-block: 2px; margin-inline: -16px; padding-inline: 16px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 7px 13px; font-size: .85rem; display: flex; align-items: center; gap: 7px; color: var(--muted);
+}
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: hsl(var(--h) 60% 55%); }
+.chip[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+
+.stage { flex: 1; min-height: 0; display: flex; perspective: 1200px; }
+.card {
+  --h: 340;
+  flex: 1; min-height: 0; border: 0; text-align: left;
+  background: hsl(var(--h) var(--card-s) var(--card-l));
+  color: hsl(var(--h) var(--ink-s) var(--ink-l));
+  box-shadow: inset 0 0 0 1px hsl(var(--h) var(--card-s) var(--edge-l)), 0 10px 30px -18px hsl(var(--h) 50% 20% / .6);
+  border-radius: 26px; padding: 30px 28px 26px;
+  display: flex; flex-direction: column; gap: 14px; overflow: hidden; position: relative;
+}
+.card::before { content: ""; position: absolute; inset: 10px; border: 1px solid currentColor; border-radius: 18px; opacity: .28; pointer-events: none; }
+.card::after { content: "♥"; position: absolute; right: -18px; bottom: -70px; font-size: 260px; line-height: 1; opacity: .07; pointer-events: none; }
+.card > * { position: relative; z-index: 1; }
+.cat { text-align: center; }
+.cat::before, .cat::after { content: "♥"; margin-inline: 8px; opacity: .6; }
+.text { font-style: italic; }
+.card.turn { animation: turn .42s ease-in-out; }
+@keyframes turn { 0% { transform: rotateY(0); } 50% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
+@media (prefers-reduced-motion: reduce) { .card.turn { animation: none; } }
+.cat { font-size: .74rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.text {
+  flex: 1; min-height: 0; overflow-y: auto; display: flex; align-items: center;
+  font-family: var(--display); font-size: clamp(1.7rem, 7.6vw, 2.5rem); line-height: 1.12; text-wrap: balance;
+}
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: .8rem; opacity: .8; font-variant-numeric: tabular-nums; }
+
+.actions { display: flex; gap: 10px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 14px 16px; font-weight: 600; }
+.btn { border-radius: 999px; }
+.btn.primary { flex: 1; background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-size: 1.05rem; box-shadow: 0 8px 20px -10px var(--accent); }
+.btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.sub { display: flex; justify-content: space-between; gap: 12px; }
+.link { background: none; border: 0; padding: 4px 0; color: var(--muted); font-size: .88rem; text-decoration: underline; text-underline-offset: 3px; }
+
+#panel { position: fixed; inset: 0; background: var(--bg); z-index: 2; display: flex; flex-direction: column; gap: 12px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+#panel .inner { max-width: 448px; width: 100%; margin-inline: auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; flex: 1; }
+#list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+#list li { --h: 340; background: hsl(var(--h) var(--card-s) var(--card-l)); color: hsl(var(--h) var(--ink-s) var(--ink-l));
+  border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+#list span { flex: 1; min-width: 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.2; }
+#list button { background: none; border: 0; padding: 2px 4px; font-size: .8rem; text-decoration: underline; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="hearts" aria-hidden="true">
+  <span style="left:8%;font-size:18px;animation-duration:19s;animation-delay:0s">♥</span>
+  <span style="left:24%;font-size:12px;animation-duration:24s;animation-delay:6s">♥</span>
+  <span style="left:43%;font-size:22px;animation-duration:27s;animation-delay:11s">♥</span>
+  <span style="left:61%;font-size:14px;animation-duration:21s;animation-delay:3s">♥</span>
+  <span style="left:78%;font-size:20px;animation-duration:25s;animation-delay:14s">♥</span>
+  <span style="left:91%;font-size:13px;animation-duration:18s;animation-delay:8s">♥</span>
+</div>
+
+<header>
+  <h1>Cartes Reconquête <em>♥</em></h1>
+  <span id="count"></span>
+</header>
+
+<div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+
+<div class="stage">
+  <button class="card" id="card" aria-live="polite" aria-label="Tirer une autre carte">
+    <span class="cat" id="cat"></span>
+    <span class="text" id="text"></span>
+    <span class="foot"><span id="num"></span><span>À compléter à voix haute</span></span>
+  </button>
+</div>
+
+<div class="actions">
+  <button class="btn" id="keep" aria-pressed="false">♡ Garder</button>
+  <button class="btn primary" id="draw">Tirer une carte</button>
+</div>
+<div class="sub">
+  <button class="link" id="openKept">Cartes gardées (0)</button>
+  <button class="link" id="reset">Remélanger le paquet</button>
+</div>
+
+<div id="panel" hidden>
+  <div class="inner">
+    <header>
+      <h1>Cartes gardées</h1>
+      <button class="link" id="closeKept">Fermer</button>
+    </header>
+    <ul id="list"></ul>
+  </div>
+</div>
+
+<script>
+const CATS = [
+  ["Gratitude et admiration", 340], ["Souvenirs et origines", 28], ["Responsabilité et réparation", 352],
+  ["Vulnérabilité et besoins", 312], ["Comprendre l'autre", 38], ["Désir, jeu et complicité", 2],
+  ["Avenir et engagement", 326], ["Quotidien et attentions", 46], ["Communication et conflits", 14],
+  ["Regard neuf sur l'autre", 300]
+];
+const RAW = [
+[0, `Une chose que j'admire chez toi et que je ne te dis jamais, c'est…
+Une chose que tu fais pour moi et que j'ai fini par trouver normale, c'est…
+Le jour où j'ai été le plus fier / la plus fière de toi, c'est…
+Une qualité que tu as et que tu sous-estimes, c'est…
+Ce que tu m'as appris sans le savoir, c'est…
+Une chose que les autres voient en toi et que j'avais oublié de regarder, c'est…
+Un sacrifice que tu as fait pour nous et que je n'ai jamais reconnu, c'est…
+Ce que ma vie aurait de moins sans toi, c'est…
+Une chose que tu fais mieux que personne, c'est…
+Un moment où tu m'as impressionné(e) sans t'en rendre compte, c'est…
+Ce que j'ai dit de bien sur toi à quelqu'un d'autre sans te le dire à toi, c'est…
+Une chose que tu as changée en moi pour le meilleur, c'est…
+Le merci que je te dois depuis longtemps, c'est pour…`],
+[1, `Ce qui m'a fait tomber amoureux / amoureuse de toi, c'est…
+Le souvenir de nous deux que je revisite le plus souvent, c'est…
+Le moment où je me suis senti(e) le plus proche de toi, c'est…
+Une épreuve qu'on a traversée ensemble et dont je suis fier / fière, c'est…
+Un fou rire avec toi que je n'oublierai jamais, c'est…
+Un petit rituel qu'on avait et qui me manque, c'est…
+La première chose que j'ai remarquée chez toi, c'est…
+Un endroit qui me fait penser à nous, c'est…
+Le jour où j'ai su que c'était toi, c'est…
+Un détail de notre première rencontre dont je me souviens encore, c'est…
+Le voyage ou la sortie avec toi que je referais demain, c'est…
+Une chanson qui me ramène à nous, c'est…
+Une photo de nous que je garde précieusement, c'est…`],
+[2, `Une chose que je voudrais faire différemment, c'est…
+Une chose que je regrette d'avoir dite ou faite, c'est…
+Une chose pour laquelle je ne me suis jamais vraiment excusé(e), c'est…
+Une chose que j'ai mal interprétée chez toi, c'est…
+Une habitude que j'ai et qui te blesse, je crois, c'est…
+Un moment où je n'ai pas été à la hauteur, c'est…
+Ce que je faisais au début et que j'ai arrêté de faire, c'est…
+Une chose que je t'ai reprochée et qui venait en réalité de moi, c'est…
+Une promesse que je n'ai pas tenue et que je veux honorer, c'est…
+Ce que j'aurais dû écouter quand tu me le disais, c'est…
+Une chose que je suis prêt(e) à pardonner, c'est…
+Une chose que j'ai laissée passer au lieu d'en parler, c'est…
+Un moment où j'ai choisi d'avoir raison plutôt que d'être proche de toi, c'est…
+Une blessure que je t'ai faite et que j'ai minimisée, c'est…
+Ce que j'aurais dû faire quand tu avais besoin de moi, c'est…
+Une excuse que j'attends encore et que je suis prêt(e) à entendre, c'est…`],
+[3, `Une chose que j'ai peur de te dire, c'est…
+Ce dont j'ai besoin et que je n'ose pas demander, c'est…
+Je me sens aimé(e) quand tu…
+Je me sens loin de toi quand…
+Une peur que j'ai à propos de nous, c'est…
+Ce qui me rassure le plus venant de toi, c'est…
+Une chose que tu ignores sur ce que je vis en ce moment, c'est…
+Ce qui me manque le plus de toi, c'est…
+Ce que je cache derrière ma colère, c'est…
+Une chose qui me fait me sentir en sécurité avec toi, c'est…
+Ce que je n'ai jamais osé t'avouer sur moi, c'est…
+Quand je me tais, ce que je ressens en réalité, c'est…
+La preuve d'amour qui me touche le plus, c'est…`],
+[4, `Une chose que j'aimerais mieux comprendre chez toi, c'est…
+Une question que je ne t'ai jamais posée, c'est…
+Ce que j'imagine être le plus difficile pour toi en ce moment, c'est…
+Un rêve à toi que j'aimerais t'aider à réaliser, c'est…
+Ce que j'aimerais savoir de ton enfance, c'est…
+Une chose que tu aimes et à laquelle je voudrais m'intéresser vraiment, c'est…
+Ce que je crois que tu attends de moi sans le dire, c'est…
+Ce que j'aimerais que tu m'expliques sur ta façon d'aimer, c'est…
+Une chose que tu portes seul(e) et que j'aimerais partager, c'est…
+Ce que je crois que tu ressens quand je m'éloigne, c'est…
+Une chose qui te rend heureux / heureuse et que j'ai négligée, c'est…
+Ce que j'aimerais savoir sur ce que tu attends de la vie, c'est…`],
+[5, `Une chose que j'aimerais expérimenter, c'est…
+Ce que je trouve le plus séduisant chez toi, c'est…
+Un geste de tendresse que j'aimerais retrouver, c'est…
+Une soirée idéale avec toi ressemblerait à…
+Une chose folle que j'aimerais qu'on ose ensemble, c'est…
+Ce qui me fait encore rougir quand je pense à toi, c'est…
+Un compliment que je pense souvent et que je garde pour moi, c'est…
+Un moment où je t'ai trouvé(e) irrésistible récemment, c'est…
+Un jeu ou une blague rien qu'à nous que j'adore, c'est…
+Une surprise que j'aimerais te faire, c'est…
+Ce qui rallume l'étincelle chez moi, c'est…`],
+[6, `Une chose que je m'engage à faire dès cette semaine, c'est…
+Un nouveau rituel que j'aimerais créer avec nous, c'est…
+Dans cinq ans, j'aimerais qu'on soit…
+Une chose que je veux protéger à tout prix dans notre relation, c'est…
+Ce que je choisis de nouveau chez toi aujourd'hui, c'est…
+Un projet que j'aimerais construire avec toi, c'est…
+Une chose que je veux qu'on ne laisse plus jamais s'installer entre nous, c'est…
+Ce que je suis prêt(e) à changer concrètement, c'est…
+Un endroit où j'aimerais vieillir avec toi, c'est…
+La version de nous que j'ai envie de faire exister, c'est…`],
+[7, `Un petit geste du quotidien qui compte énormément pour moi, c'est…
+Une tâche que tu assumes et que je pourrais prendre en charge, c'est…
+Le moment de la journée où j'aime le plus être avec toi, c'est…
+Une attention simple que je pourrais t'offrir plus souvent, c'est…
+Ce qui me fait sourire quand je rentre et que tu es là, c'est…`],
+[8, `Ce que j'aimerais qu'on fasse autrement quand on se dispute, c'est…
+Une phrase que tu dis et qui m'apaise tout de suite, c'est…
+Une phrase que je dis et que je voudrais retirer de mon vocabulaire, c'est…
+Ce dont j'ai besoin pour revenir vers toi après une dispute, c'est…
+Un sujet qu'on évite et que j'aimerais aborder calmement, c'est…`],
+[9, `Si je te rencontrais aujourd'hui pour la première fois, ce qui me plairait, c'est…
+Une facette de toi que j'ai découverte récemment, c'est…
+Ce en quoi tu as grandi depuis qu'on se connaît, c'est…
+Une chose que je croyais être un défaut chez toi et qui est en fait une force, c'est…
+Ce que je vois en toi quand je prends vraiment le temps de te regarder, c'est…`]
+];
+const CARDS = [];
+RAW.forEach(([c, block]) => block.split("\n").forEach(t => CARDS.push({ c, t, n: CARDS.length + 1 })));
+
+const $ = id => document.getElementById(id);
+const KEY = "reconquete-v1";
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+function start(s) {
+  const st = { drawn: s.drawn || [], kept: s.kept || [], off: s.off || [], cur: s.cur || 0 };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+  window.claude?.hot?.snapshot?.(() => st);
+
+  const pool = () => CARDS.filter(k => !st.off.includes(k.c));
+  const left = () => pool().filter(k => !st.drawn.includes(k.n));
+
+  function show(animate) {
+    const k = CARDS[st.cur - 1], card = $("card");
+    const paint = () => {
+      if (k) {
+        card.style.setProperty("--h", CATS[k.c][1]);
+        $("cat").textContent = CATS[k.c][0];
+        $("text").textContent = k.t;
+        $("num").textContent = "N° " + k.n + " / " + CARDS.length;
+      } else {
+        $("cat").textContent = "Paquet terminé";
+        $("text").textContent = pool().length ? "Toutes les cartes de cette sélection ont été tirées. Remélangez le paquet pour recommencer." : "Aucune catégorie n'est sélectionnée. Activez-en au moins une.";
+        $("num").textContent = "";
+      }
+      $("keep").disabled = !k;
+      const on = !!k && st.kept.includes(k.n);
+      $("keep").setAttribute("aria-pressed", on);
+      $("keep").textContent = on ? "♥ Gardée" : "♡ Garder";
+    };
+    if (animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      card.classList.remove("turn"); void card.offsetWidth; card.classList.add("turn");
+      setTimeout(paint, 210);
+    } else paint();
+    const p = pool().length;
+    $("count").textContent = (p - left().length) + " / " + p + " tirées";
+    $("openKept").textContent = "Cartes gardées (" + st.kept.length + ")";
+    $("draw").disabled = !left().length;
+  }
+
+  function draw() {
+    const l = left();
+    if (!l.length) { st.cur = 0; save(); show(true); return; }
+    const k = l[Math.floor(Math.random() * l.length)];
+    st.cur = k.n; st.drawn.push(k.n); save(); show(true);
+  }
+
+  function chips() {
+    const box = $("chips"); box.textContent = "";
+    CATS.forEach(([name, h], i) => {
+      const b = document.createElement("button");
+      b.className = "chip"; b.id = "chip-" + i; b.style.setProperty("--h", h);
+      b.setAttribute("aria-pressed", !st.off.includes(i));
+      b.appendChild(document.createElement("i")); b.append(name);
+      b.onclick = () => {
+        st.off = st.off.includes(i) ? st.off.filter(x => x !== i) : st.off.concat(i);
+        save(); chips(); show(false);
+      };
+      box.appendChild(b);
+    });
+  }
+
+  function list() {
+    const ul = $("list"); ul.textContent = "";
+    if (!st.kept.length) {
+      const li = document.createElement("p"); li.className = "empty";
+      li.textContent = "Aucune carte gardée pour l'instant. Touchez « Garder » sur une carte pour la retrouver ici.";
+      ul.appendChild(li); return;
+    }
+    st.kept.forEach(n => {
+      const k = CARDS[n - 1], li = document.createElement("li"), sp = document.createElement("span"), rm = document.createElement("button");
+      li.style.setProperty("--h", CATS[k.c][1]); sp.textContent = k.t; rm.textContent = "Retirer";
+      rm.onclick = () => { st.kept = st.kept.filter(x => x !== n); save(); list(); show(false); };
+      li.append(sp, rm); ul.appendChild(li);
+    });
+  }
+
+  $("draw").onclick = draw;
+  $("card").onclick = draw;
+  $("keep").onclick = () => {
+    if (!st.cur) return;
+    st.kept = st.kept.includes(st.cur) ? st.kept.filter(x => x !== st.cur) : st.kept.concat(st.cur);
+    save(); show(false);
+  };
+  $("reset").onclick = () => { st.drawn = []; save(); draw(); };
+  $("openKept").onclick = () => { list(); $("panel").hidden = false; };
+  $("closeKept").onclick = () => { $("panel").hidden = true; };
+
+  chips();
+  if (st.cur) show(false); else { const l = left(); if (l.length) { const k = l[Math.floor(Math.random() * l.length)]; st.cur = k.n; st.drawn.push(k.n); save(); } show(false); }
+}
+const boot = d => start(d && d.drawn ? d : load());
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
