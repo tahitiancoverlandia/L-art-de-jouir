@@ -15,7 +15,7 @@
 <style>
 /* Layout: one-screen app — header, category chips, one large card that fills the remaining height, actions pinned below. */
 :root {
-  --bg: #FBEDE8; --glow: #F6CFCB; --fg: #4A1526; --muted: #8C5A63; --surface: #FFF8F4; --line: #EBC9C4;
+  --bg: #FBEDE8; --glow: #F6CFCB; --glow2: #F6CFCB; --heart-glow: transparent; --card-glow: transparent; --fg: #4A1526; --muted: #8C5A63; --surface: #FFF8F4; --line: #EBC9C4;
   --accent: #C2264F; --on-accent: #FFFFFF; --heart: #E58A9C;
   --card-s: 78%; --card-l: 93%; --ink-s: 60%; --ink-l: 24%; --edge-l: 80%;
   --display: "Cormorant Garamond", "Hoefler Text", Garamond, Georgia, serif;
@@ -23,22 +23,22 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #24090F; --glow: #4F1526; --fg: #FBE6E1; --muted: #C99AA1; --surface: #381219; --line: #5A222E;
-    --accent: #FF7C96; --on-accent: #3A0712; --heart: #B8475E;
-    --card-s: 42%; --card-l: 20%; --ink-s: 75%; --ink-l: 90%; --edge-l: 36%;
+    --bg: #16050D; --glow: #5C1233; --glow2: #4A2209; --fg: #FCE9E4; --muted: #D6A6B0; --surface: #2E0D1B; --line: #6E2B42;
+    --accent: #FF6F91; --on-accent: #33040F; --heart: #F06A8C; --heart-glow: rgba(255, 111, 145, .55); --card-glow: rgba(255, 120, 150, .22);
+    --card-s: 50%; --card-l: 16%; --ink-s: 85%; --ink-l: 91%; --edge-l: 44%;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #24090F; --glow: #4F1526; --fg: #FBE6E1; --muted: #C99AA1; --surface: #381219; --line: #5A222E;
-  --accent: #FF7C96; --on-accent: #3A0712; --heart: #B8475E;
-  --card-s: 42%; --card-l: 20%; --ink-s: 75%; --ink-l: 90%; --edge-l: 36%;
+  --bg: #16050D; --glow: #5C1233; --glow2: #4A2209; --fg: #FCE9E4; --muted: #D6A6B0; --surface: #2E0D1B; --line: #6E2B42;
+  --accent: #FF6F91; --on-accent: #33040F; --heart: #F06A8C; --heart-glow: rgba(255, 111, 145, .55); --card-glow: rgba(255, 120, 150, .22);
+  --card-s: 50%; --card-l: 16%; --ink-s: 85%; --ink-l: 91%; --edge-l: 44%;
   color-scheme: dark;
 }
 html, body { height: 100%; }
-html { background: radial-gradient(130% 55% at 50% 0%, var(--glow), transparent 72%), radial-gradient(90% 40% at 50% 100%, var(--glow), transparent 75%), var(--bg); }
+html { background: radial-gradient(130% 55% at 50% 0%, var(--glow), transparent 72%), radial-gradient(90% 40% at 50% 100%, var(--glow2), transparent 75%), var(--bg); }
 .hearts { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.hearts span { position: absolute; bottom: -40px; color: var(--heart); opacity: 0; animation: rise linear infinite; }
+.hearts span { position: absolute; bottom: -40px; color: var(--heart); text-shadow: 0 0 14px var(--heart-glow); opacity: 0; animation: rise linear infinite; }
 @keyframes rise { 0% { transform: translateY(0) rotate(-8deg); opacity: 0; } 15% { opacity: .5; } 85% { opacity: .35; } 100% { transform: translateY(-110vh) rotate(10deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .hearts span { animation: none; opacity: .25; bottom: auto; } }
 body > :not(.hearts):not(#panel) { position: relative; z-index: 1; }
@@ -53,7 +53,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-h1 { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 2rem; margin: 0; line-height: 1; }
+h1 { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 1.8rem; white-space: nowrap; margin: 0; line-height: 1; }
+.top { display: flex; align-items: center; gap: 10px; }
+#theme { border: 1px solid var(--line); background: var(--surface); border-radius: 50%; width: 36px; height: 36px; padding: 0; font-size: 1rem; line-height: 1; }
 #count { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-block: 2px; margin-inline: -16px; padding-inline: 16px; scrollbar-width: none; }
@@ -71,7 +73,7 @@ h1 { font-family: var(--display); font-style: italic; font-weight: 600; font-siz
   flex: 1; min-height: 0; border: 0; text-align: left;
   background: hsl(var(--h) var(--card-s) var(--card-l));
   color: hsl(var(--h) var(--ink-s) var(--ink-l));
-  box-shadow: inset 0 0 0 1px hsl(var(--h) var(--card-s) var(--edge-l)), 0 10px 30px -18px hsl(var(--h) 50% 20% / .6);
+  box-shadow: inset 0 0 0 1px hsl(var(--h) var(--card-s) var(--edge-l)), 0 10px 30px -18px hsl(var(--h) 50% 20% / .6), 0 0 42px var(--card-glow);
   border-radius: 26px; padding: 30px 28px 26px;
   display: flex; flex-direction: column; gap: 14px; overflow: hidden; position: relative;
 }
@@ -136,7 +138,7 @@ h1 { font-family: var(--display); font-style: italic; font-weight: 600; font-siz
 
 <header>
   <h1>L'art de jouir <em>♥</em></h1>
-  <span id="count"></span>
+  <span class="top"><span id="count"></span><button id="theme" aria-label="Changer de thème">☾</button></span>
 </header>
 
 <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
@@ -284,6 +286,19 @@ const CARDS = [];
 RAW.forEach(([c, block]) => block.split("\n").forEach(t => CARDS.push({ c, t, n: CARDS.length + 1 })));
 
 const $ = id => document.getElementById(id);
+(function () {
+  const root = document.documentElement, K = "art-theme";
+  const isDark = () => root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const paint = () => {
+    const d = isDark();
+    $("theme").textContent = d ? "☀" : "☾";
+    $("theme").setAttribute("aria-label", d ? "Passer en mode clair" : "Passer en mode sombre");
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = d ? "#16050D" : "#FBEDE8";
+  };
+  try { const s = localStorage.getItem(K); if (s === "dark" || s === "light") root.dataset.theme = s; } catch (e) {}
+  $("theme").onclick = () => { const t = isDark() ? "light" : "dark"; root.dataset.theme = t; try { localStorage.setItem(K, t); } catch (e) {} paint(); };
+  paint();
+})();
 const KEY = "reconquete-v1";
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
 function start(s) {
